@@ -1,0 +1,9 @@
+[submodule "exoquant"]
+	path = exoquant
+	url = https://github.com/exoticorn/exoquant.git
+	ignore = dirty
+	
+[submodule "stb"]
+	path = stb
+	url = https://github.com/nothings/stb.git
+	ignore = dirty
