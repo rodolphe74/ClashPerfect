@@ -1,2 +1,4 @@
 vsproj/
 debug/
+.DS_Store
+.cache/
