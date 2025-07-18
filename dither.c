@@ -1,7 +1,6 @@
 #include "dither.h"
 #include "thomson.h"
 #include "image.h"
-#include <exoquant.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -24,17 +23,17 @@ unsigned char clamp_color_component(double val)
 }
 
 void block_dithering_thomson_smart_propagation(const unsigned char *original_image, DitheredPixel *dithered_image,
-											   int width, int height, int original_channels, Color pal[16])
+											   int width, int height, int original_channels, Color pal[16], float *matrix)
 {
-	// Alloue de la mémoire pour une version flottante de l'image (pour l'accumulation d'erreur)
-	// C'est ici que l'erreur va se propager D'UN BLOC À L'AUTRE.
+	// Alloue de la mÃ©moire pour une version flottante de l'image (pour l'accumulation d'erreur)
+	// C'est ici que l'erreur va se propager D'UN BLOC Ã€ L'AUTRE.
 	double *image_float = (double *)malloc(width * height * 3 * sizeof(double));
 	if (!image_float) {
-		printf("Erreur: Impossible d'allouer la mémoire pour l'image flottante.\n");
+		printf("Erreur: Impossible d'allouer la mÃ©moire pour l'image flottante.\n");
 		exit(EXIT_FAILURE);
 	}
 
-	// Initialise l'image flottante avec les données de l'image originale.
+	// Initialise l'image flottante avec les donnÃ©es de l'image originale.
 	for (int i = 0; i < width * height * 3; ++i) {
 		image_float[i] = (double)original_image[i];
 	}
@@ -42,7 +41,7 @@ void block_dithering_thomson_smart_propagation(const unsigned char *original_ima
 	for (int y = 0; y < height; ++y) {
 		for (int x_block_start = 0; x_block_start < width; x_block_start += 8) {
 
-			// A. Préparer les "couleurs effectives" du bloc (original + erreur propagée)
+			// A. PrÃ©parer les "couleurs effectives" du bloc (original + erreur propagÃ©e)
 			Color block_effective_colors[8]; // Couleurs des pixels du bloc, incluant l'erreur flottante
 			int current_block_size = 0;
 
@@ -59,15 +58,15 @@ void block_dithering_thomson_smart_propagation(const unsigned char *original_ima
 
 			if (current_block_size == 0) continue;
 
-			// B. Trouver les 2 meilleures couleurs de palette pour ce bloc, basées sur les couleurs effectives
-			// Cette étape est cruciale : elle utilise les couleurs "pré-ditherées" (avec erreur accumulée)
+			// B. Trouver les 2 meilleures couleurs de palette pour ce bloc, basÃ©es sur les couleurs effectives
+			// Cette Ã©tape est cruciale : elle utilise les couleurs "prÃ©-ditherÃ©es" (avec erreur accumulÃ©e)
 			// pour faire un meilleur choix de palette.
 			double min_total_error_sq = -1.0;
 			int best_color_idx1 = -1;
 			int best_color_idx2 = -1;
 
 			for (int i = 0; i < 16; ++i) {
-				for (int j = i; j < 16; ++j) { // j=i pour permettre le cas où une seule couleur est optimale
+				for (int j = i; j < 16; ++j) { // j=i pour permettre le cas oÃ¹ une seule couleur est optimale
 					double current_pair_total_error_sq = 0.0;
 					for (int k = 0; k < current_block_size; ++k) {
 						Color effective_px_color = block_effective_colors[k];
@@ -84,25 +83,25 @@ void block_dithering_thomson_smart_propagation(const unsigned char *original_ima
 				}
 			}
 
-			// Fallback (ne devrait pas être nécessaire si la palette n'est pas vide)
+			// Fallback (ne devrait pas Ãªtre nÃ©cessaire si la palette n'est pas vide)
 			if (best_color_idx1 == -1) {
 				best_color_idx1 = 0;
 				best_color_idx2 = 1;
 			}
 
-			// C. Dithering Floyd-Steinberg à l'intérieur du bloc et propagation de l'erreur
-			// Cette partie ressemble à un Floyd-Steinberg classique, mais les couleurs cibles
-			// sont limitées à best_color_idx1 et best_color_idx2.
+			// C. Dithering Floyd-Steinberg Ã  l'intÃ©rieur du bloc et propagation de l'erreur
+			// Cette partie ressemble Ã  un Floyd-Steinberg classique, mais les couleurs cibles
+			// sont limitÃ©es Ã  best_color_idx1 et best_color_idx2.
 			for (int dx = 0; dx < current_block_size; ++dx) {
 				int current_x = x_block_start + dx;
 				int float_idx = (y * width + current_x) * 3;
 
-				// Couleur actuelle du pixel flottant (incluant l'erreur propagée)
+				// Couleur actuelle du pixel flottant (incluant l'erreur propagÃ©e)
 				Color old_color_effective = {(unsigned char)clamp_color_component(image_float[float_idx]),
 											 (unsigned char)clamp_color_component(image_float[float_idx + 1]),
 											 (unsigned char)clamp_color_component(image_float[float_idx + 2])};
 
-				// Quantifier à la couleur de palette la plus proche PARMI LES DEUX CHOISIES POUR LE BLOC
+				// Quantifier Ã  la couleur de palette la plus proche PARMI LES DEUX CHOISIES POUR LE BLOC
 				int final_pixel_palette_idx;
 				double dist1_sq = color_distance_sq(old_color_effective, pal[best_color_idx1]);
 				double dist2_sq = color_distance_sq(old_color_effective, pal[best_color_idx2]);
@@ -123,39 +122,59 @@ void block_dithering_thomson_smart_propagation(const unsigned char *original_ima
 				double error_b = (double)old_color_effective.b - new_color_quantized.b;
 
 				// Propager l'erreur aux voisins DANS L'IMAGE FLOTTANTE GLOBALE
-				// C'est ici que l'intelligence réside : l'erreur est propagée "normalement"
+				// C'est ici que l'intelligence rÃ©side : l'erreur est propagÃ©e "normalement"
 				// mais c'est la phase de CHOIX DE PALETTE DU BLOC SUIVANT qui s'adapte.
 
-				// (x+1, y) - à droite (dans le même bloc ou bloc voisin)
-				if (current_x + 1 < width) {
-					int neighbor_float_idx = (y * width + (current_x + 1)) * 3;
-					image_float[neighbor_float_idx] += error_r * 7.0 / 16.0;
-					image_float[neighbor_float_idx + 1] += error_g * 7.0 / 16.0;
-					image_float[neighbor_float_idx + 2] += error_b * 7.0 / 16.0;
-				}
+				// (x+1, y) - Ã  droite (dans le mÃªme bloc ou bloc voisin)
 
-				// (x-1, y+1) - en bas à gauche (bloc voisin en dessous)
-				if (current_x - 1 >= 0 && y + 1 < height) {
-					int neighbor_float_idx = ((y + 1) * width + (current_x - 1)) * 3;
-					image_float[neighbor_float_idx] += error_r * 3.0 / 16.0;
-					image_float[neighbor_float_idx + 1] += error_g * 3.0 / 16.0;
-					image_float[neighbor_float_idx + 2] += error_b * 3.0 / 16.0;
-				}
 
-				// (x, y+1) - en bas (bloc voisin en dessous)
-				if (y + 1 < height) {
-					int neighbor_float_idx = ((y + 1) * width + current_x) * 3;
-					image_float[neighbor_float_idx] += error_r * 5.0 / 16.0;
-					image_float[neighbor_float_idx + 1] += error_g * 5.0 / 16.0;
-					image_float[neighbor_float_idx + 2] += error_b * 5.0 / 16.0;
-				}
+				// propagation d'erreur sans matrice
+				// if (current_x + 1 < width) {
+				// 	int neighbor_float_idx = (y * width + (current_x + 1)) * 3;
+				// 	image_float[neighbor_float_idx] += error_r * 7.0 / 16.0;
+				// 	image_float[neighbor_float_idx + 1] += error_g * 7.0 / 16.0;
+				// 	image_float[neighbor_float_idx + 2] += error_b * 7.0 / 16.0;
+				// }
+    //
+				// // (x-1, y+1) - en bas Ã  gauche (bloc voisin en dessous)
+				// if (current_x - 1 >= 0 && y + 1 < height) {
+				// 	int neighbor_float_idx = ((y + 1) * width + (current_x - 1)) * 3;
+				// 	image_float[neighbor_float_idx] += error_r * 3.0 / 16.0;
+				// 	image_float[neighbor_float_idx + 1] += error_g * 3.0 / 16.0;
+				// 	image_float[neighbor_float_idx + 2] += error_b * 3.0 / 16.0;
+				// }
+    //
+				// // (x, y+1) - en bas (bloc voisin en dessous)
+				// if (y + 1 < height) {
+				// 	int neighbor_float_idx = ((y + 1) * width + current_x) * 3;
+				// 	image_float[neighbor_float_idx] += error_r * 5.0 / 16.0;
+				// 	image_float[neighbor_float_idx + 1] += error_g * 5.0 / 16.0;
+				// 	image_float[neighbor_float_idx + 2] += error_b * 5.0 / 16.0;
+				// }
+    //
+				// // (x+1, y+1) - en bas Ã  droite (bloc voisin en dessous)
+				// if (current_x + 1 < width && y + 1 < height) {
+				// 	int neighbor_float_idx = ((y + 1) * width + (current_x + 1)) * 3;
+				// 	image_float[neighbor_float_idx] += error_r * 1.0 / 16.0;
+				// 	image_float[neighbor_float_idx + 1] += error_g * 1.0 / 16.0;
+				// 	image_float[neighbor_float_idx + 2] += error_b * 1.0 / 16.0;
+				// }
 
-				// (x+1, y+1) - en bas à droite (bloc voisin en dessous)
-				if (current_x + 1 < width && y + 1 < height) {
-					int neighbor_float_idx = ((y + 1) * width + (current_x + 1)) * 3;
-					image_float[neighbor_float_idx] += error_r * 1.0 / 16.0;
-					image_float[neighbor_float_idx + 1] += error_g * 1.0 / 16.0;
-					image_float[neighbor_float_idx + 2] += error_b * 1.0 / 16.0;
+
+				// propagation d'erreur avec matrix dynamique
+				int matrix_size = matrix[0];
+				for (int i = 0; i < matrix_size; i++) {
+					int xm = matrix[i * 3 + 1];
+					int ym = matrix[i * 3 + 2];
+					float value = matrix[i * 3 + 3];
+					// printf("x=%d y=%d f=%f\n", xm, ym, value);
+
+					if ((current_x + xm < width) && (current_x + xm >= 0) && (y + ym < height) ) {
+						int neighbor_float_idx = ((y + ym) * width + (current_x + xm)) * 3;
+						image_float[neighbor_float_idx] += error_r * value;
+						image_float[neighbor_float_idx + 1] += error_g * value;
+						image_float[neighbor_float_idx + 2] += error_b * value;
+					}
 				}
 			}
 		}
@@ -163,11 +182,11 @@ void block_dithering_thomson_smart_propagation(const unsigned char *original_ima
 	free(image_float);
 }
 
-// --- Fonction de Vérification du Color Clash (essentielle) ---
-// Cette fonction reste la même et est cruciale pour valider que l'algorithme respecte la contrainte.
+// --- Fonction de VÃ©rification du Color Clash (essentielle) ---
+// Cette fonction reste la mÃªme et est cruciale pour valider que l'algorithme respecte la contrainte.
 bool verify_color_clash(const DitheredPixel *dithered_image, int width, int height)
 {
-	printf("\n--- Vérification finale du respect de la contrainte de 2 couleurs par bloc ---\n");
+	printf("\n--- VÃ©rification finale du respect de la contrainte de 2 couleurs par bloc ---\n");
 	bool all_respected = true;
 	int violations_count = 0;
 
@@ -190,14 +209,14 @@ bool verify_color_clash(const DitheredPixel *dithered_image, int width, int heig
 			if (color_count > 2) {
 				all_respected = false;
 				violations_count++;
-				printf("VIOLATION DÉTECTÉE: Bloc à (%d, %d) contient %d couleurs uniques.\n", x_block_start, y,
+				printf("VIOLATION DÃ‰TECTÃ‰E: Bloc Ã  (%d, %d) contient %d couleurs uniques.\n", x_block_start, y,
 					   color_count);
 			}
 		}
 	}
 
 	if (all_respected) {
-		printf("RÉUSSITE : Toutes les contraintes de 2 couleurs par bloc sont respectées. (0 violations)\n");
+		printf("RÃ‰USSITE : Toutes les contraintes de 2 couleurs par bloc sont respectÃ©es. (0 violations)\n");
 	} else {
 		printf("ATTENTION : %d blocs ne respectent PAS la contrainte de 2 couleurs. "
 			   "Ceci est inattendu avec l'algorithme actuel et pourrait indiquer une erreur de logique.\n",
@@ -205,28 +224,6 @@ bool verify_color_clash(const DitheredPixel *dithered_image, int width, int heig
 	}
 	printf("-----------------------------------------------------------------\n");
 	return all_respected;
-}
-
-void find_rgb_palette(const unsigned char *original_image, Color pal[16])
-{
-	exq_data *eq = exq_init();
-	exq_no_transparency(eq);
-	unsigned char *converted_image = NULL;
-	converted_image = convert_rgb_to_rgba(original_image, WIDTH, HEIGHT);
-	exq_feed(eq, converted_image, WIDTH * HEIGHT);
-	exq_quantize_ex(eq, PALETTE_SIZE, 1);
-	unsigned char p[16][4];
-	exq_get_palette(eq, (unsigned char *)p, PALETTE_SIZE);
-
-	for (int i = 0; i < PALETTE_SIZE; i++) {
-		pal[i].r = p[i][0];
-		pal[i].g = p[i][1];
-		pal[i].b = p[i][2];
-		printf("rgb[%d]=%d,%d,%d\n", i, p[i][0], p[i][1], p[i][2]);
-	}
-
-	free(converted_image);
-	exq_free(eq);
 }
 
 

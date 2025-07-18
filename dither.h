@@ -1,7 +1,6 @@
 #ifndef DITHER_H
 #define DITHER_H
 
-#include "dither.h"
 #include "thomson.h"
 #include <stdbool.h>
 
@@ -49,9 +48,8 @@ static double m2[HIST_SIZE_DIM][HIST_SIZE_DIM]
 double color_distance_sq(Color c1, Color c2);
 unsigned char clamp_color_component(double val);
 void block_dithering_thomson_smart_propagation(const unsigned char *original_image, DitheredPixel *dithered_image,
-											   int width, int height, int original_channels, Color pal[16]);
+											   int width, int height, int original_channels, Color pal[16], float *matrix);
 bool verify_color_clash(const DitheredPixel *dithered_image, int width, int height);
-void find_rgb_palette(const unsigned char *original_image, Color pal[16]);
 
 
 void generate_wu_only_palette(const unsigned char *image_data, int image_width, int image_height,

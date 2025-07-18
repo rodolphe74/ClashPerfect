@@ -1,0 +1,12 @@
+AlignTrailingComments: true
+AllowShortFunctionsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: true
+AllowShortLoopsOnASingleLine: true
+BreakBeforeBinaryOperators: false
+UseTab: Always
+IndentWidth: 4
+TabWidth: 4
+SortIncludes: false
+NamespaceIndentation: All
+ColumnLimit: 120
+BreakBeforeBraces: Linux

@@ -1,6 +1,7 @@
 #include "thomson.h"
 #include <float.h>
 #include <math.h>
+#include <string.h>
 
 void init_thomson_palette(Color pal[4096])
 {
@@ -83,8 +84,8 @@ void transpose_data_map_40(int columns, int lines, IntVector *src, IntVector *ta
 	uint8_t current;
 	uint8_t zero = 0;
 
-	// Le nombre de lignes doit être un multiple de 8
-	// La hauteur est inscrite dans l'entêtte du map
+	// Le nombre de lignes doit Ãªtre un multiple de 8
+	// La hauteur est inscrite dans l'entÃªtte du map
 	// sous la forme (map_40->lines - 1) / 8
 
 	int padding = lines % 8;
@@ -235,7 +236,7 @@ void thomson_encode_bloc(uint8_t bloc[8], uint8_t thomson_bloc[3])
 	// thomson_bloc[0] = forme
 	// thomson_bloc[1] = couleurs format TO
 	// thomson_bloc[2] = couleurs format MO
-	// En basic, le format de la couleur est spécifié en fonction de la config TO/MO
+	// En basic, le format de la couleur est spÃ©cifiÃ© en fonction de la config TO/MO
 	// En SNAP-TO, le format de la couleur est toujours TO
 
 	// recherche des couleurs
@@ -268,9 +269,9 @@ void save_map_40_col(const char *filename, MAP_SEG *map_40, Color thomson_palett
 	init_vector(&buffer_list);
 	init_vector(&target_buffer_list);
 
-	sprintf(map_filename, "%s.map", filename);
+	sprintf(map_filename, "%s.MAP", filename);
 	if ((fout = fopen(map_filename, "wb")) == NULL) {
-		fprintf(stderr, "Impossible d'ouvrir le fichier données en écriture\n");
+		fprintf(stderr, "Impossible d'ouvrir le fichier donnÃ©es en Ã©criture\n");
 		return;
 	}
 
@@ -286,7 +287,7 @@ void save_map_40_col(const char *filename, MAP_SEG *map_40, Color thomson_palett
 	uint16_t size = (uint16_t)target_buffer_list.size + 3 + 39;
 
 	if (size % 2 == 1) {
-		// Apparement, la taille doit être paire
+		// Apparement, la taille doit Ãªtre paire
 		unsigned char zero = 0;
 		push_back(&target_buffer_list, zero);
 		size++;
@@ -302,7 +303,7 @@ void save_map_40_col(const char *filename, MAP_SEG *map_40, Color thomson_palett
 
 	fwrite(header, sizeof(uint8_t), 8, fout);
 
-	// Ecriture du buffer map compressé dans le fichier de sortie
+	// Ecriture du buffer map compressÃ© dans le fichier de sortie
 	// cout << "ToSnap buffer size:" << target_buffer_list.size() << endl;
 	for (int i = 0; i < target_buffer_list.size; i++) {
 		// current = target_buffer_list.at(i);
@@ -315,7 +316,7 @@ void save_map_40_col(const char *filename, MAP_SEG *map_40, Color thomson_palett
 
 	memset(to_snap, 0, 39);
 	to_snap[0] = 0; // 16 couleurs 40 colonnes
-	to_snap[2] = 0; // tour de l'écran
+	to_snap[2] = 0; // tour de l'Ã©cran
 	to_snap[4] = 0; // mode 3 console
 
 	for (int i = 0; i < 16; i++) {
@@ -339,7 +340,7 @@ void save_map_40_col(const char *filename, MAP_SEG *map_40, Color thomson_palett
 	fflush(fout);
 	fclose(fout);
 
-	printf("TO-SNAP créé\n");
+	printf("TO-SNAP crÃ©Ã©\n");
 
 	free_vector(&buffer_list);
 	free_vector(&target_buffer_list);

@@ -3,6 +3,14 @@
 #include "dither.h"
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
+#define STB_IMAGE_RESIZE2_IMPLEMENTATION
+#include <stb_image_resize2.h>
+
 
 static inline unsigned long get_color_hash_index(uint8_t r, uint8_t g, uint8_t b)
 {
@@ -12,7 +20,7 @@ static inline unsigned long get_color_hash_index(uint8_t r, uint8_t g, uint8_t b
 long count_unique_colors_hashed(const unsigned char *image_data, int width, int height)
 {
 	if (image_data == NULL || width <= 0 || height <= 0) {
-		printf("Erreur: Données d'image invalides ou dimensions non valides.\n");
+		printf("Erreur: DonnÃ©es d'image invalides ou dimensions non valides.\n");
 		return 0;
 	}
 
@@ -23,8 +31,8 @@ long count_unique_colors_hashed(const unsigned char *image_data, int width, int 
 
 	bool *color_seen = (bool *)calloc(MAX_24BIT_COLORS, sizeof(bool));
 	if (color_seen == NULL) {
-		printf("Erreur: Impossible d'allouer de la mémoire pour la table de hachage des couleurs (%llu octets).\n",
-			   MAX_24BIT_COLORS * sizeof(bool));
+		printf("Erreur: Impossible d'allouer de la mÃ©moire pour la table de hachage des couleurs (%lu octets).\n",
+			   (unsigned long) MAX_24BIT_COLORS * sizeof(bool));
 		return 0;
 	}
 
@@ -114,7 +122,7 @@ uint8_t *frame_into_canvas(const uint8_t *inputData, int ix, int iy, uint8_t *ou
 unsigned char *convert_rgb_to_rgba(const unsigned char *src_image_data, int width, int height)
 {
 	if (src_image_data == NULL || width <= 0 || height <= 0) {
-		fprintf(stderr, "Erreur: Données d'image source invalides ou dimensions non valides.\n");
+		fprintf(stderr, "Erreur: DonnÃ©es d'image source invalides ou dimensions non valides.\n");
 		return NULL;
 	}
 
@@ -126,7 +134,7 @@ unsigned char *convert_rgb_to_rgba(const unsigned char *src_image_data, int widt
 
 	unsigned char *dest_image_data = (unsigned char *)malloc(dest_data_size);
 	if (dest_image_data == NULL) {
-		fprintf(stderr, "Erreur: Impossible d'allouer de la mémoire pour l'image RGBA (%zu octets).\n", dest_data_size);
+		fprintf(stderr, "Erreur: Impossible d'allouer de la mÃ©moire pour l'image RGBA (%zu octets).\n", dest_data_size);
 		return NULL;
 	}
 
@@ -134,7 +142,7 @@ unsigned char *convert_rgb_to_rgba(const unsigned char *src_image_data, int widt
 		long src_pixel_index = i * src_components;
 		long dest_pixel_index = i * dest_components;
 
-		// Vérification de débordement pour éviter l'accès hors limites
+		// VÃ©rification de dÃ©bordement pour Ã©viter l'accÃ¨s hors limites
 		if ((dest_pixel_index + 3) < (long)dest_data_size && (src_pixel_index + 2) < (long)(total_pixels * src_components)) {
 			dest_image_data[dest_pixel_index + 0] = src_image_data[src_pixel_index + 0]; // R
 			dest_image_data[dest_pixel_index + 1] = src_image_data[src_pixel_index + 1]; // G
