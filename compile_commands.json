@@ -1,0 +1,38 @@
+[
+{
+  "directory": "/Users/rodoc/develop/ClashPerfect/debug",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc  -I/Users/rodoc/develop/ClashPerfect/stb -I/Users/rodoc/develop/ClashPerfect/exoquant  -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -o CMakeFiles/clash.dir/clash.c.o -c /Users/rodoc/develop/ClashPerfect/clash.c",
+  "file": "/Users/rodoc/develop/ClashPerfect/clash.c",
+  "output": "CMakeFiles/clash.dir/clash.c.o"
+},
+{
+  "directory": "/Users/rodoc/develop/ClashPerfect/debug",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc  -I/Users/rodoc/develop/ClashPerfect/stb -I/Users/rodoc/develop/ClashPerfect/exoquant  -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -o CMakeFiles/clash.dir/int_vector.c.o -c /Users/rodoc/develop/ClashPerfect/int_vector.c",
+  "file": "/Users/rodoc/develop/ClashPerfect/int_vector.c",
+  "output": "CMakeFiles/clash.dir/int_vector.c.o"
+},
+{
+  "directory": "/Users/rodoc/develop/ClashPerfect/debug",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc  -I/Users/rodoc/develop/ClashPerfect/stb -I/Users/rodoc/develop/ClashPerfect/exoquant  -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -o CMakeFiles/clash.dir/thomson.c.o -c /Users/rodoc/develop/ClashPerfect/thomson.c",
+  "file": "/Users/rodoc/develop/ClashPerfect/thomson.c",
+  "output": "CMakeFiles/clash.dir/thomson.c.o"
+},
+{
+  "directory": "/Users/rodoc/develop/ClashPerfect/debug",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc  -I/Users/rodoc/develop/ClashPerfect/stb -I/Users/rodoc/develop/ClashPerfect/exoquant  -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -o CMakeFiles/clash.dir/image.c.o -c /Users/rodoc/develop/ClashPerfect/image.c",
+  "file": "/Users/rodoc/develop/ClashPerfect/image.c",
+  "output": "CMakeFiles/clash.dir/image.c.o"
+},
+{
+  "directory": "/Users/rodoc/develop/ClashPerfect/debug",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc  -I/Users/rodoc/develop/ClashPerfect/stb -I/Users/rodoc/develop/ClashPerfect/exoquant  -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -o CMakeFiles/clash.dir/dither.c.o -c /Users/rodoc/develop/ClashPerfect/dither.c",
+  "file": "/Users/rodoc/develop/ClashPerfect/dither.c",
+  "output": "CMakeFiles/clash.dir/dither.c.o"
+},
+{
+  "directory": "/Users/rodoc/develop/ClashPerfect/debug",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc  -I/Users/rodoc/develop/ClashPerfect/stb -I/Users/rodoc/develop/ClashPerfect/exoquant  -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -o CMakeFiles/clash.dir/exoquant/exoquant.c.o -c /Users/rodoc/develop/ClashPerfect/exoquant/exoquant.c",
+  "file": "/Users/rodoc/develop/ClashPerfect/exoquant/exoquant.c",
+  "output": "CMakeFiles/clash.dir/exoquant/exoquant.c.o"
+}
+]
