@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <getopt.h>
 // #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 // #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -15,14 +16,86 @@
 #include "matrix.h"
 #include "k7.h"
 
+void usage()
+{
+	fprintf(stderr, "\n");
+	fprintf(stderr, "Usage: clash <nom_fichier> [-d<chiffre>] [-m<chiffre>]\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "-d<chiffre> : matrice de dithering\n");
+	fprintf(stderr, "  0=Standard\n");
+	fprintf(stderr, "  1=Jarvis\n");
+	fprintf(stderr, "  2=Zhigang\n");
+	fprintf(stderr, "  3=Shiau\n");
+	fprintf(stderr, "  4=Shiau 2\n");
+	fprintf(stderr, "  5=Stucki\n");
+	fprintf(stderr, "  6=Burkes\n");
+	fprintf(stderr, "  7=Sierra\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "-m<chiffre> : machine\n");
+	fprintf(stderr, "  0=MO5\n");
+	fprintf(stderr, "  1=MO6\n");
+}
+
 int main(int argc, char *argv[])
 {
 	Color thomson_palette[4096];
 	init_thomson_palette(thomson_palette);
 	Color palette[PALETTE_SIZE];
 
+
+
+	int opt;
+	char *nom_fichier = NULL;
+	int val_d = -1; // Initialisé à -1 pour indiquer qu'il n'a pas été défini
+	int val_m = -1; // Initialisé à -1 pour indiquer qu'il n'a pas été défini
+
+	// Chaîne d'options : "d:m:" signifie que -d prend un argument et -m prend un argument
+	while ((opt = getopt(argc, argv, "d:m:")) != -1) {
+		switch (opt) {
+		case 'd':
+			val_d = atoi(optarg); // optarg contient la chaîne de l'argument (ex: "0")
+			if (val_d < 0 || val_d > 7) {
+				usage();
+				return 1;
+			}
+			break;
+		case 'm':
+			val_m = atoi(optarg);
+			if (val_m < 0 || val_m > 1) {
+				usage();
+				return 1;
+			};
+			break;
+		case '?': // getopt renvoie '?' si une option est inconnue ou un argument manque
+			usage();
+			return 1; // Code d'erreur
+		}
+	}
+
+	// Après la boucle getopt, optind est l'indice du premier argument non-optionnel.
+	// Dans votre cas, ce sera le nom de fichier.
+	if (optind < argc) {
+		nom_fichier = argv[optind]; // Le premier argument non-optionnel est notre nom de fichier
+	} else {
+		fprintf(stderr, "Erreur: Le nom de fichier est manquant.\n");
+		usage();
+		return 1;
+	}
+
+	// Vérifier si toutes les options requises ont été définies (si elles sont obligatoires)
+	if (val_d == -1) {
+		val_d = 0;
+	}
+	if (val_m == -1) {
+		val_m = 0;
+	}
+
+	printf("arguments: %s %d %d\n", nom_fichier, val_d, val_m);
+
+
 	int width, height, channels;
-	unsigned char *original_image = stbi_load(argv[1], &width, &height, &channels, COLOR_COMP);
+	//unsigned char *original_image = stbi_load(argv[1], &width, &height, &channels, COLOR_COMP);
+	unsigned char *original_image = stbi_load(nom_fichier, &width, &height, &channels, COLOR_COMP);
 	if (!original_image) {
 		printf("Erreur: Impossible de charger l'image d'entrée '%s'. Vérifiez le chemin ou le format.\n", argv[1]);
 		return EXIT_FAILURE;
@@ -45,11 +118,14 @@ int main(int argc, char *argv[])
 	}
 
 	Color optimal_palette[PALETTE_SIZE];
-	generate_wu_only_palette(framed_image, WIDTH, HEIGHT, thomson_palette, optimal_palette);
 
-	// Trouve la palette dans l'espace de couleur thomson
-	// find_closest_thomson_palette(mo5_palette, thomson_palette, palette);
-	 find_closest_thomson_palette(optimal_palette, thomson_palette, palette);
+	if (val_m == 1) {
+		generate_wu_only_palette(framed_image, WIDTH, HEIGHT, thomson_palette, optimal_palette);
+		find_closest_thomson_palette(optimal_palette, thomson_palette, palette);
+	} else {
+		find_closest_thomson_palette(mo5_palette, thomson_palette, palette);
+	}
+
 
 	DitheredPixel *dithered_image = (DitheredPixel *)malloc(sizeof(DitheredPixel) * WIDTH * HEIGHT);
 	if (!dithered_image) {
@@ -61,7 +137,7 @@ int main(int argc, char *argv[])
 
 	// --- Appel de la NOUVELLE fonction de dithering avec propagation intelligente ---
 	block_dithering_thomson_smart_propagation(framed_image, dithered_image, WIDTH, HEIGHT, COLOR_COMP, palette,
-											  FS_ATKINSON);
+											  floyd_matrix[val_d].matrix);
 
 	// --- Vérification finale (devrait toujours être 0 violations) ---
 	verify_color_clash(dithered_image, WIDTH, HEIGHT);
