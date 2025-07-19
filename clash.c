@@ -101,6 +101,7 @@ int main(int argc, char *argv[])
 	// Ajout dans une k7
 	FILE *fick7 = fopen("clash.k7", "wb");
 	ajouterFichier(fick7, "CLASH.MAP");
+	fclose(fick7);
 
 	stbi_image_free(original_image);
 	free(resized_image);
