@@ -63,11 +63,12 @@ void find_closest_thomson_palette(Color optimalPalette[PALETTE_SIZE], Color thom
 								  Color newPalette[PALETTE_SIZE]);
 
 // TO-SNAP
-int getIndexColorThomsonTo(int back_index, int fore_index);
-int getIndexColorThomsonMo(int back_index, int fore_index);
+int get_index_color_thomson_to(int back_index, int fore_index);
+int get_index_color_thomson_mo(int back_index, int fore_index);
 void clash_fragment_to_palette_indexed_bloc(const unsigned char *fragment, uint8_t *bloc, int blocSize,
 											Color palette[PALETTE_SIZE]);
 void thomson_encode_bloc(uint8_t bloc[8], uint8_t thomson_bloc[3]);
+void find_back_and_front(uint8_t bloc[8], uint8_t *back, uint8_t *front);
 int find_thomson_palette_index(int r, int g, int b, Color thomson_palette[NUM_THOMSON_COLORS]);
 int find_palette_index(int r, int g, int b, Color palette[PALETTE_SIZE]);
 void transpose_data_map_40(int columns, int lines, IntVector *src, IntVector *target);
@@ -77,6 +78,6 @@ void compress(IntVector *target, IntVector *buffer_list, int enclose);
 void save_map_40_col(const char *filename, MAP_SEG *map_40, Color thomson_palette[NUM_THOMSON_COLORS],
 					 Color palette[PALETTE_SIZE]);
 void save_as_to_snap(const char *name, const uint8_t *output_image_data, Color thomson_palette[NUM_THOMSON_COLORS],
-					 Color palette[16]);
+					 Color palette[16], IntVector *pixels, IntVector *colors);
 
 #endif

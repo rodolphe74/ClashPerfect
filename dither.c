@@ -623,5 +623,5 @@ void generate_wu_only_palette(const unsigned char *image_data, int image_width, 
 				   i);
 		}
 	}
-	printf("Génération de la palette Wu uniquement terminée. Taille finale de la palette: %d\n", PALETTE_SIZE);
+	printf("Génération de la palette Wu terminée. Taille finale de la palette: %d\n", PALETTE_SIZE);
 }

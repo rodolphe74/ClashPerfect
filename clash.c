@@ -168,17 +168,52 @@ int main(int argc, char *argv[])
 	if (!stbi_write_png("clash.png", WIDTH, HEIGHT, 3, output_image_data, WIDTH * 3)) {
 		printf("Erreur: Impossible d'écrire l'image PNG '%s'. Tentative en BMP...\n", "clash.png");
 	} else {
-		printf("Image sauvée avec succès au format PNG: '%s'\n", "clash.png");
+		printf("clash.png créé\n");
 	}
 
 	// --- Image TO-SNAP ---
-	save_as_to_snap("CLASH", output_image_data, thomson_palette, palette);
+	IntVector pixels, colors;
+	init_vector(&pixels);
+	init_vector(&colors);
+	save_as_to_snap("CLASH", output_image_data, thomson_palette, palette, &pixels, &colors);
+	printf("CLASH.MAP créé\n");
 
-	// Ajout dans une k7
-	FILE *fick7 = fopen("clash.k7", "wb");
+	// --- Création des fichiers binaires couleur et forme MO5
+	uint8_t header[] = {0x00, 0x1F, 0x40, 0x00, 0x00};
+	uint8_t footer[] = {0xFF, 0x00, 0x00, 0x00, 0x00};
+	uint8_t *c = (uint8_t *)malloc(colors.size);
+	if (c)
+		for (int i = 0; i < colors.size; i++) {
+			c[i] = colors.data[i];
+		}
+	FILE *fc = fopen("COLORS.BIN", "wb");
+	fwrite(header, 1, 5, fc);
+	if (c) fwrite(c, 1, colors.size, fc);
+	fwrite(footer, 1, 5, fc);
+	fclose(fc);
+	free(c);
+	uint8_t *p = (uint8_t *)malloc(pixels.size);
+	if (p)
+		for (int i = 0; i < pixels.size; i++) {
+			p[i] = pixels.data[i];
+		}
+	FILE *fp = fopen("PIXELS.BIN", "wb");
+	fwrite(header, 1, 5, fc);
+	if (p) fwrite(p, 1, pixels.size, fp);
+	fwrite(footer, 1, 5, fc);
+	fclose(fp);
+	free(p);
+
+	// --- Ajout dans une k7 ---
+ 	FILE *fick7 = fopen("clash.k7", "wb");
 	ajouterFichier(fick7, "CLASH.MAP");
+	ajouterFichier(fick7, "PIXELS.BIN");
+	ajouterFichier(fick7, "COLORS.BIN");
 	fclose(fick7);
+	printf("clash.k7 créé\n");
 
+	free_vector(&pixels);
+	free_vector(&colors);
 	stbi_image_free(original_image);
 	free(resized_image);
 	free(framed_image);

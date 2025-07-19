@@ -201,7 +201,7 @@ void clash_fragment_to_palette_indexed_bloc(const unsigned char *fragment, uint8
 }
 
 
-int getIndexColorThomsonTo(int back_index, int fore_index)
+int get_index_color_thomson_to(int back_index, int fore_index)
 {
 	// Palette thomson TO xyBVRBVR | x = 0 : fd pastel | y = 0 fo pastel
 	// N,R,V,J,B,M,C,BL (fonce)
@@ -216,7 +216,7 @@ int getIndexColorThomsonTo(int back_index, int fore_index)
 	return idx;
 }
 
-int getIndexColorThomsonMo(int back_index, int fore_index)
+int get_index_color_thomson_mo(int back_index, int fore_index)
 {
 	// Palette thomson MO5/6 xBVRyBVR | x = 1 : fd pastel | y = 1 fo pastel
 	// N,R,V,J,B,M,C,BL (fonce)
@@ -252,10 +252,42 @@ void thomson_encode_bloc(uint8_t bloc[8], uint8_t thomson_bloc[3])
 		if (bloc[i] == fo) val += pow(2, i);
 
 	// Couleur MO / TO
-	thomson_bloc[1] = getIndexColorThomsonTo(fd, fo <= 0 ? 0 : fo);
-	thomson_bloc[2] = getIndexColorThomsonMo(fd, fo <= 0 ? 0 : fo);
+	thomson_bloc[1] = get_index_color_thomson_to(fd, fo <= 0 ? 0 : fo);
+	thomson_bloc[2] = get_index_color_thomson_mo(fd, fo <= 0 ? 0 : fo);
 
 	thomson_bloc[0] = val;
+}
+
+void find_back_and_front(uint8_t bloc[8], uint8_t *back, uint8_t *front)
+{
+	uint8_t b = 0;
+	uint8_t f = 0;
+	uint8_t bc = 0, fc = 0;
+	uint8_t count[255] = {0};
+	for (int i = 0; i < 8; i++) {
+		count[bloc[i]]++;
+	}
+	for (int i = 0; i < 255; i++) {
+		if (count[i] > 0) {
+			b = i;
+			bc = count[i];
+		}
+	}
+
+	for (int i = 0; i < 255; i++) {
+		if (count[i] > 0 && i != b) {
+			f = i;
+			fc = count[i];
+		}
+	}
+	// printf("b=%d  f=%d\n", b, f);
+	if (bc > fc) {
+		*back = b;
+		*front = f;
+	} else {
+		*back = f;
+		*front = b;
+	}
 }
 
 void save_map_40_col(const char *filename, MAP_SEG *map_40, Color thomson_palette[NUM_THOMSON_COLORS], Color palette[PALETTE_SIZE])
@@ -340,7 +372,7 @@ void save_map_40_col(const char *filename, MAP_SEG *map_40, Color thomson_palett
 	fflush(fout);
 	fclose(fout);
 
-	printf("TO-SNAP créé\n");
+	//printf("TO-SNAP créé\n");
 
 	free_vector(&buffer_list);
 	free_vector(&target_buffer_list);
@@ -367,9 +399,10 @@ void save_map_40_col(const char *filename, MAP_SEG *map_40, Color thomson_palett
 	// fflush(stdout);
 }
 
-void save_as_to_snap(const char *name, const uint8_t *output_image_data, Color thomson_palette[NUM_THOMSON_COLORS], Color palette[16])
+void save_as_to_snap(const char *name, const uint8_t *output_image_data, Color thomson_palette[NUM_THOMSON_COLORS], Color palette[16], IntVector *pixels, IntVector *colors)
 {
 	MAP_SEG map_40;
+	uint8_t b, f;
 	init_vector(&map_40.rama);
 	init_vector(&map_40.ramb);
 	unsigned char *clash_fragment = malloc(8 * COLOR_COMP);
@@ -393,9 +426,24 @@ void save_as_to_snap(const char *name, const uint8_t *output_image_data, Color t
 			thomson_encode_bloc(current_bloc, ret);
 			push_back(&map_40.rama, ret[0]);
 			push_back(&map_40.ramb, ret[1]);
+
+			// MO5 pixels and colors
+			find_back_and_front(current_bloc, &b, &f);
+			unsigned char result = 0;
+			for (int i = 0; i < 8; i++) {
+				if (current_bloc[7 - i] == f) {
+					result |= 1 << (7 - i);
+				}
+			}
+			// en sortie les données pixels et forme (utils pour la sauvegarde MO5)
+			push_back(colors, 16 * f + b);
+			push_back(pixels, result);
 		}
 	}
 	map_40.lines = HEIGHT;
 	map_40.columns = WIDTH / 8 + (WIDTH % 8 == 0 ? 0 : 1);
 	save_map_40_col(name, &map_40, thomson_palette, palette);
+
+	free_vector(&map_40.rama);
+	free_vector(&map_40.ramb);
 }
