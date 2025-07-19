@@ -60,7 +60,8 @@ int main(int argc, char *argv[])
 
 
 	// --- Appel de la NOUVELLE fonction de dithering avec propagation intelligente ---
-	block_dithering_thomson_smart_propagation(framed_image, dithered_image, WIDTH, HEIGHT, COLOR_COMP, palette, FS_BURKES);
+	block_dithering_thomson_smart_propagation(framed_image, dithered_image, WIDTH, HEIGHT, COLOR_COMP, palette,
+											  FS_ATKINSON);
 
 	// --- Vérification finale (devrait toujours être 0 violations) ---
 	verify_color_clash(dithered_image, WIDTH, HEIGHT);

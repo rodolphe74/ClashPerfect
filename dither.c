@@ -188,7 +188,7 @@ bool verify_color_clash(const DitheredPixel *dithered_image, int width, int heig
 {
 	printf("\n--- Vérification finale du respect de la contrainte de 2 couleurs par bloc ---\n");
 	bool all_respected = true;
-	int violations_count = 0;
+	int errors_count = 0;
 
 	for (int y = 0; y < height; ++y) {
 		for (int x_block_start = 0; x_block_start < width; x_block_start += 8) {
@@ -208,19 +208,19 @@ bool verify_color_clash(const DitheredPixel *dithered_image, int width, int heig
 
 			if (color_count > 2) {
 				all_respected = false;
-				violations_count++;
-				printf("VIOLATION DÉTECTÉE: Bloc à (%d, %d) contient %d couleurs uniques.\n", x_block_start, y,
+				errors_count++;
+				printf("ERREUR DÉTECTÉE: Bloc à (%d, %d) contient %d couleurs uniques.\n", x_block_start, y,
 					   color_count);
 			}
 		}
 	}
 
 	if (all_respected) {
-		printf("RÉUSSITE : Toutes les contraintes de 2 couleurs par bloc sont respectées. (0 violations)\n");
+		printf("RÉUSSITE : Toutes les contraintes de 2 couleurs par bloc sont respectées.\n");
 	} else {
 		printf("ATTENTION : %d blocs ne respectent PAS la contrainte de 2 couleurs. "
 			   "Ceci est inattendu avec l'algorithme actuel et pourrait indiquer une erreur de logique.\n",
-			   violations_count);
+			   errors_count);
 	}
 	printf("-----------------------------------------------------------------\n");
 	return all_respected;
@@ -338,13 +338,13 @@ void generate_wu_only_palette(const unsigned char *image_data, int image_width, 
 	WuIdealColor temp_ideal_colors_pool[PALETTE_SIZE]; // Wu will generate PALETTE_SIZE ideal colors.
 	int current_ideal_pool_count = 0;				   // Counter for the number of ideal colors currently in the pool
 
-	printf("Starting Wu-only palette generation (target %d colors from image dominance)...\n", PALETTE_SIZE);
+	printf("Démarrage de la génération de palette Wu (cible %d couleurs à partir de la dominance de l'image)\n", PALETTE_SIZE);
 
 	// --- PHASE 1: (REMOVED) No forced Black and White colors in this version. ---
 	// All colors will be derived from Wu's algorithm.
 
 	// --- PHASE 2: Build the 3D Color Histogram and Moment Tables for Wu's Algorithm ---
-	printf("\n--- Phase 2: Building 3D Color Histogram and Moment Tables (Wu Algorithm Preparation) ---\n");
+	printf("\n--- Phase 2 : Création d'un histogramme de couleurs 3D et de tables de moments (préparation de l'algorithme Wu) ---\n");
 
 	// Reset Wu's moment tables for a clean start with the current image data.
 	for (int r = 0; r < HIST_SIZE_DIM; r++) {
@@ -358,12 +358,11 @@ void generate_wu_only_palette(const unsigned char *image_data, int image_width, 
 			}
 		}
 	}
-	printf("  Moment tables reset to zero.\n");
 
 	// Populate the histogram and calculate initial moments from image pixels.
 	// The 'factor' maps a 0-255 RGB value to an index between 0 and THOMSON_LEVELS_PER_DIM-1 (i.e., 0-15).
 	double factor = (double)THOMSON_LEVELS_PER_DIM / MAX_COLOR_COMPONENT_VALUE; // 16.0 / 256.0 = 0.0625
-	printf("  Mapping pixel values to %d bins per dimension (factor %.4f).\n", THOMSON_LEVELS_PER_DIM, factor);
+	printf("  Mappage des valeurs de pixels sur %d bacs par dimension (facteur %.4f).\n", THOMSON_LEVELS_PER_DIM, factor);
 
 	for (long i = 0; i < num_pixels; i++) {
 		int r_idx = (int)(pixels[i].r * factor);
@@ -382,7 +381,7 @@ void generate_wu_only_palette(const unsigned char *image_data, int image_width, 
 		m2[r_idx][g_idx][b_idx] +=
 			(double)pixels[i].r * pixels[i].r + (double)pixels[i].g * pixels[i].g + (double)pixels[i].b * pixels[i].b;
 	}
-	printf("  Initial histogram population and moment calculation complete.\n");
+	printf("  Population initiale de l'histogramme et calcul du moment terminés.\n");
 
 	// Compute rectangular moments (prefix sums) for efficient cube calculations.
 	for (int r = 0; r < HIST_SIZE_DIM; r++) {
@@ -440,11 +439,9 @@ void generate_wu_only_palette(const unsigned char *image_data, int image_width, 
 			}
 		}
 	}
-	printf("  Rectangular moments computation complete.\n");
-	printf("--- Phase 2 Finished ---\n\n");
 
 	// --- PHASE 3: Extract PALETTE_SIZE (16) dominant colors using Wu's algorithm ---
-	printf("--- Phase 3: Extracting %d Wu Dominant Colors (for full palette) ---\n", PALETTE_SIZE);
+	printf("--- Phase 3: Extraction de %d couleurs dominantes Wu (pour une palette complète) ---\n", PALETTE_SIZE);
 	Cube cubes[PALETTE_SIZE]; // Array to hold the cubes after splitting
 	cubes[0].r0 = cubes[0].g0 = cubes[0].b0 = 0;
 	cubes[0].r1 = cubes[0].g1 = cubes[0].b1 = HIST_SIZE_DIM - 1; // Initial cube covers entire histogram.
@@ -538,10 +535,9 @@ void generate_wu_only_palette(const unsigned char *image_data, int image_width, 
 		}
 
 		if (best_cube_idx == -1) {
-			fprintf(stderr,
-					"Wu: Failed to find a suitable cube to split. This may happen if the image has very few distinct "
-					"colors. Final Wu colors found: %d\n",
-					num_cubes);
+			printf("Wu : Impossible de trouver un cube approprié à diviser. Cela peut se produire si l'image comporte "
+				   "très peu de parties de couleurs distinctes. Couleurs finales trouvées : %d.",
+				   num_cubes);
 			break; // No further beneficial splits can be made, stop.
 		}
 
@@ -582,14 +578,11 @@ void generate_wu_only_palette(const unsigned char *image_data, int image_width, 
 		}
 		current_ideal_pool_count++;
 	}
-	printf("  Wu algorithm completed. Generated %d ideal dominant colors.\n", current_ideal_pool_count);
-	printf("--- Phase 3 Finished ---\n\n");
+	printf("  Algorithme Wu terminé. Génération de %d couleurs dominantes idéales..\n", current_ideal_pool_count);
 
-	// --- PHASE 4: (REMOVED) No additional fixed colors (CMY/Grayscale) in this Wu-only version. ---
-	// All palette colors will come from the Wu dominant colors.
 
-	// --- PHASE 5: "Snap" all ideal Wu colors to unique Thomson palette colors ---
-	printf("--- Phase 5: Snapping Ideal Wu Colors to Unique Thomson Palette Colors ---\n");
+	// --- PHASE 4: "Snap" all ideal Wu colors to unique Thomson palette colors ---
+	printf("--- Phase 4: Alignement des couleurs Wu idéales sur les couleurs uniques de la palette Thomson ---\n");
 
 	// This loop fills the entire generated_palette (from index 0 to PALETTE_SIZE-1).
 	for (int i = 0; i < PALETTE_SIZE; i++) {
@@ -605,9 +598,7 @@ void generate_wu_only_palette(const unsigned char *image_data, int image_width, 
 			// successfully reached PALETTE_SIZE in Phase 3.
 			// However, as a safeguard, if Wu failed to find enough distinct cubes,
 			// we will fill remaining slots with random unique Thomson colors.
-			fprintf(stderr,
-					"Warning: Wu algorithm yielded fewer than %d dominant colors. Filling remaining slots with random "
-					"Thomson colors.\n",
+			printf("Avertissement : L'algorithme Wu a généré moins de %d couleurs dominantes. Les emplacements restants sont remplis avec des couleurs Thomson aléatoires..\n",
 					PALETTE_SIZE);
 			Color random_fallback_color = {(unsigned char)(rand() % 256), (unsigned char)(rand() % 256),
 										   (unsigned char)(rand() % 256), 0};
@@ -619,18 +610,18 @@ void generate_wu_only_palette(const unsigned char *image_data, int image_width, 
 		if (closest_thomson_idx != -1) {
 			generated_palette[i] = thomson_palette[closest_thomson_idx];
 			is_thomson_color_used_in_generated_palette[closest_thomson_idx] = true;
-			printf("  Snapping Ideal #%d (Target: R:%.0f G:%.0f B:%.0f) -> Thomson Index %d (R:%d G:%d B:%d) at "
-				   "palette[%d]\n",
+			printf("  Alignement n° %d (cible : R :%.0f G :%.0f B :%.0f) -> Couleur Thomson (R :%d G :%d B :%d) à la "
+				   "palette [%d]\n",
 				   i, temp_ideal_colors_pool[i].r_val, temp_ideal_colors_pool[i].g_val, temp_ideal_colors_pool[i].b_val,
-				   thomson_palette[closest_thomson_idx].thomson_idx, thomson_palette[closest_thomson_idx].r,
-				   thomson_palette[closest_thomson_idx].g, thomson_palette[closest_thomson_idx].b, i);
+				   thomson_palette[closest_thomson_idx].r, thomson_palette[closest_thomson_idx].g,
+				   thomson_palette[closest_thomson_idx].b, i);
 		} else {
 			// Fallback if no more unique Thomson colors are available for any reason.
 			generated_palette[i] = (Color){0, 0, 0, 0}; // Default to black
-			fprintf(stderr, "Error: Could not find any unique Thomson color for slot %d. Assigning fallback (0,0,0).\n",
-					i);
+			printf("Erreur : Impossible de trouver une couleur Thomson unique pour l'emplacement %d. Affectation de la "
+				   "valeur de secours (0,0,0).\n",
+				   i);
 		}
 	}
-	printf("--- Phase 5 Finished ---\n\n");
-	printf("Wu-only palette generation completed. Final palette size: %d\n", PALETTE_SIZE);
+	printf("Génération de la palette Wu uniquement terminée. Taille finale de la palette: %d\n", PALETTE_SIZE);
 }

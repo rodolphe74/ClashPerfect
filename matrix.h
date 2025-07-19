@@ -101,17 +101,17 @@ static float FS_ATKINSON[] = {
 };
 
 
-static float FS_KNUTH[] = {
-  8,
-  -1,-1,	1.0 / 10,
-  0, -1,	1.0 / 5,
-  1, -1,	1.0 / 10,
-  -1,0,	1.0 / 10,
-  1, 0,	1.0 / 10,
-  -1,1,	1.0 / 10,
-  0, 1,	1.0 / 5,
-  1, 1,	1.0 / 10
-};
+//static float FS_KNUTH[] = {
+//  8,
+//  -1,-1,	1.0 / 10,
+//  0, -1,	1.0 / 5,
+//  1, -1,	1.0 / 10,
+//  -1,0,	1.0 / 10,
+//  1, 0,	1.0 / 10,
+//  -1,1,	1.0 / 10,
+//  0, 1,	1.0 / 5,
+//  1, 1,	1.0 / 10
+//};
 
 
 struct FLOYD_MATRIX_STRUCT {
@@ -132,6 +132,6 @@ static FLOYD_MATRIX floyd_matrix[] = {
   { .name = "Stucki",   .matrix = FS_STUCKI   },
   { .name = "Burkes",   .matrix = FS_BURKES   },
   { .name = "Sierra",   .matrix = FS_SIERRA   },
-  { .name = "Atkinson", .matrix = FS_ATKINSON },
-  { .name = "Knuth",    .matrix = FS_KNUTH    }
+  { .name = "Atkinson", .matrix = FS_ATKINSON }
+  //{ .name = "Knuth",    .matrix = FS_KNUTH    }
 };

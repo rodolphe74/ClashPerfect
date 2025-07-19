@@ -54,9 +54,9 @@ void find_closest_thomson_palette(Color optimalPalette[PALETTE_SIZE], Color thom
 				minIndex = j;
 			}
 		}
-		printf("o (%d,%d,%d)\n", optimalPalette[i].r, optimalPalette[i].g, optimalPalette[i].b);
-		printf("t %f -> %d (%d,%d,%d)\n", minDistance, minIndex, thomson_palette[minIndex].r,
-			   thomson_palette[minIndex].g, thomson_palette[minIndex].b);
+		//printf("o (%d,%d,%d)\n", optimalPalette[i].r, optimalPalette[i].g, optimalPalette[i].b);
+		//printf("t %f -> %d (%d,%d,%d)\n", minDistance, minIndex, thomson_palette[minIndex].r,
+			   //thomson_palette[minIndex].g, thomson_palette[minIndex].b);
 		newPalette[i].r = thomson_palette[minIndex].r;
 		newPalette[i].g = thomson_palette[minIndex].g;
 		newPalette[i].b = thomson_palette[minIndex].b;
@@ -321,7 +321,7 @@ void save_map_40_col(const char *filename, MAP_SEG *map_40, Color thomson_palett
 
 	for (int i = 0; i < 16; i++) {
 		uint16_t thomson_palette_value = find_thomson_palette_index(palette[i].r, palette[i].g, palette[i].b, thomson_palette);
-		printf(" (%d,%d,%d)  thomson[%d]=%d\n", palette[i].r, palette[i].g, palette[i].b, i,
+		printf(" rgb(%d,%d,%d) -> Thomson[%d]=%d\n", palette[i].r, palette[i].g, palette[i].b, i,
 			   thomson_palette_value);
 		to_snap[5 + i * 2] = (thomson_palette_value >> 8) & 255;
 		to_snap[5 + i * 2 + 1] = thomson_palette_value & 255;
