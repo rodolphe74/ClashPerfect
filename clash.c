@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
 	Color optimal_palette[PALETTE_SIZE];
 
 	if (val_m == 1) {
-		generate_wu_only_palette(framed_image, WIDTH, HEIGHT, thomson_palette, optimal_palette);
+		generate_palette_wu_thomson_aware(framed_image, WIDTH, HEIGHT, thomson_palette, optimal_palette);
 		find_closest_thomson_palette(optimal_palette, thomson_palette, palette);
 	} else {
 		find_closest_thomson_palette(mo5_palette, thomson_palette, palette);

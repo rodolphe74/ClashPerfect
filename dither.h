@@ -5,54 +5,40 @@
 #include <stdbool.h>
 
 
-// --- Global Constants and Definitions ---
-// These would typically be in a header file (e.g., "palette.h") for a larger project.
+// --- Définitions globales et structures ---
+#define NUM_THOMSON_COLORS 4096 // Nombre total de couleurs dans la palette Thomson
+#define PALETTE_SIZE 16			// Nombre de couleurs souhaité dans la palette finale
 
-#define NUM_THOMSON_COLORS 4096 // Assuming Thomson palette has 16*16*16 = 4096 colors
-#define PALETTE_SIZE 16			// The target size of the generated palette (all derived from Wu)
-
-// Constants for Wu's algorithm histogram (ADAPTED FOR THOMSON PALETTE GRANULARITY)
-#define THOMSON_LEVELS_PER_DIM 16				   // Number of levels per R, G, B component (0-15) for Thomson
-#define HIST_SIZE_DIM (THOMSON_LEVELS_PER_DIM + 1) // Dimension of the 3D histogram array (0-16 for indices)
-#define MAX_COLOR_COMPONENT_VALUE 256			   // Max value for a color component (0-255)
-
-// --- Data Structures ---
-// These typedefs should also be in a header file if used across multiple .c files.
+//// Structure pour une couleur (RGB 0-255 avec index Thomson)
+//typedef struct {
+//	uint8_t r, g, b;
+//	int thomson_idx; // L'index de cette couleur dans la thomson_palette (-1 si non applicable)
+//} Color;
 
 typedef struct {
-	unsigned char r, g, b;
-} Pixel; // Used for reading raw image data (e.g., from an image file)
+	int min_idx, max_idx;	  // Plage d'indices Thomson que cette boîte couvre
+	long sum_r, sum_g, sum_b; // Sommes des composantes RGB des couleurs Thomson dans cette boîte
+	uint32_t pixel_count;	  // Nombre total de pixels (réels) associés aux couleurs Thomson dans cette boîte
+	double variance;		  // Variance des couleurs dans cette boîte (utilisée pour le critère de division)
+} WuBox;
 
-// Structure for intermediate "ideal" colors calculated by Wu's algorithm
-typedef struct {
-	double r_val, g_val, b_val; // Floating-point RGB values for ideal color
-} WuIdealColor;
-
-// Structure for color cubes used in Wu's algorithm
-typedef struct {
-	int r0, g0, b0; // Min R, G, B histogram indices
-	int r1, g1, b1; // Max R, G, B histogram indices
-} Cube;
-
-// --- Global Static Moment Tables for Wu's Algorithm ---
-// These tables must be reset to zero before processing each new image.
-// Declared as static to limit their scope to this file.
-static long vwt[HIST_SIZE_DIM][HIST_SIZE_DIM][HIST_SIZE_DIM]; // Total pixel count (volume)
-static long vmr[HIST_SIZE_DIM][HIST_SIZE_DIM][HIST_SIZE_DIM]; // Sum of red component values
-static long vmg[HIST_SIZE_DIM][HIST_SIZE_DIM][HIST_SIZE_DIM]; // Sum of green component values
-static long vmb[HIST_SIZE_DIM][HIST_SIZE_DIM][HIST_SIZE_DIM]; // Sum of blue component values
-static double m2[HIST_SIZE_DIM][HIST_SIZE_DIM]
-				[HIST_SIZE_DIM]; // Sum of squared component values (for variance calculation)
+// --- Déclaration de la palette Thomson globale et du tableau d'unicité ---
+extern Color thomson_palette[NUM_THOMSON_COLORS];
+static bool is_thomson_color_used_in_generated_palette[NUM_THOMSON_COLORS];
 
 
-double color_distance_sq(Color c1, Color c2);
+
+
+double distance_squared(unsigned char r1, unsigned char g1, unsigned char b1, unsigned char r2, unsigned char g2,
+						unsigned char b2);
+int find_closest_thomson_idx(unsigned char r, unsigned char g, unsigned char b,
+							 const Color thomson_pal[NUM_THOMSON_COLORS], const bool *current_used_flags);
 unsigned char clamp_color_component(double val);
+
 void block_dithering_thomson_smart_propagation(const unsigned char *original_image, DitheredPixel *dithered_image,
 											   int width, int height, int original_channels, Color pal[16], float *matrix);
 bool verify_color_clash(const DitheredPixel *dithered_image, int width, int height);
-
-
-void generate_wu_only_palette(const unsigned char *image_data, int image_width, int image_height,
-							  const Color thomson_palette[NUM_THOMSON_COLORS], Color generated_palette[PALETTE_SIZE]);
-
+void generate_palette_wu_thomson_aware(uint8_t *framed_image, int width, int height,
+									   Color thomson_palette_source[NUM_THOMSON_COLORS],
+									   Color generated_palette[PALETTE_SIZE]);
 #endif // ! DITHER_H
