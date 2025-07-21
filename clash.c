@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 		switch (opt) {
 		case 'd':
 			val_d = atoi(optarg); // optarg contient la chaîne de l'argument (ex: "0")
-			if (val_d < 0 || val_d > 7) {
+			if (val_d < 0 || val_d > 8) {
 				usage();
 				return 1;
 			}
