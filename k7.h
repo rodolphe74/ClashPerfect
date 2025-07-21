@@ -3,7 +3,6 @@
 
 #include <memory.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 void ajouterFichier(FILE *k7, char *filename);
 

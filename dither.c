@@ -1,7 +1,7 @@
 #include "dither.h"
 #include "thomson.h"
-#include "image.h"
 #include <math.h>
+#include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
