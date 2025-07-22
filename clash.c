@@ -30,6 +30,8 @@ void usage()
 	fprintf(stderr, "  5=Stucki\n");
 	fprintf(stderr, "  6=Burkes\n");
 	fprintf(stderr, "  7=Sierra\n");
+	fprintf(stderr, "  8=Atkinson\n");
+	fprintf(stderr, "  9=Ostromoukhov\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "-m<chiffre> : machine\n");
 	fprintf(stderr, "  0=MO5\n");
@@ -54,7 +56,7 @@ int main(int argc, char *argv[])
 		switch (opt) {
 		case 'd':
 			val_d = atoi(optarg); // optarg contient la chaîne de l'argument (ex: "0")
-			if (val_d < 0 || val_d > 8) {
+			if (val_d < 0 || val_d > 9) {
 				usage();
 				return 1;
 			}
@@ -137,7 +139,7 @@ int main(int argc, char *argv[])
 
 	// --- Appel de la NOUVELLE fonction de dithering avec propagation intelligente ---
 	block_dithering_thomson_smart_propagation(framed_image, dithered_image, WIDTH, HEIGHT, COLOR_COMP, palette,
-											  floyd_matrix[val_d].matrix);
+											  val_d == 9 ? NULL : floyd_matrix[val_d].matrix);
 
 	// --- Vérification finale (devrait toujours être 0 violations) ---
 	verify_color_clash(dithered_image, WIDTH, HEIGHT);

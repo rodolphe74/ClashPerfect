@@ -1,3 +1,4 @@
+#include "matrix.h"
 #include "dither.h"
 #include "thomson.h"
 #include <math.h>
@@ -7,14 +8,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 uint32_t thomson_histogram[NUM_THOMSON_COLORS];
 
 double distance_squared(unsigned char r1, unsigned char g1, unsigned char b1, unsigned char r2, unsigned char g2,
-							   unsigned char b2)
+						unsigned char b2)
 {
 	long dr = r1 - r2;
 	long dg = g1 - g2;
@@ -35,7 +35,7 @@ double color_distance_sq(Color c1, Color c2)
 // Elle est utilisée pour le pré-snapping de chaque pixel ou pour trouver la couleur Thomson la plus proche d'un
 // centroïde idéal.
 int find_closest_thomson_idx(unsigned char r, unsigned char g, unsigned char b,
-									const Color thomson_pal[NUM_THOMSON_COLORS], const bool *current_used_flags)
+							 const Color thomson_pal[NUM_THOMSON_COLORS], const bool *current_used_flags)
 {
 	double min_dist_sq = -1.0;
 	int closest_idx = -1;
@@ -55,12 +55,6 @@ int find_closest_thomson_idx(unsigned char r, unsigned char g, unsigned char b,
 	}
 	return closest_idx;
 }
-
-
-
-
-
-
 
 // Fonction pour calculer les moments (sommes et variances) pour une boîte
 // MAINTENANT AVEC thomson_pal_source EN PARAMÈTRE
@@ -161,7 +155,6 @@ static bool find_best_split(WuBox *box_to_split, WuBox *new_box, const Color tho
 	return false;
 }
 
-
 // Étapes Clés de l'Algorithme de Wu (Adapté Thomson)
 // 1. Construction de l'Histogramme Thomson-Aware :
 // But : Compter la fréquence d'apparition de chaque couleur Thomson pertinente dans l'image source.
@@ -202,8 +195,6 @@ static bool find_best_split(WuBox *box_to_split, WuBox *new_box, const Color tho
 // couleurs issues de l'algorithme de Wu. Si le Wu devait générer le noir ou le blanc, il serait simplement ignoré car
 // déjà inclus. Si, après le forçage et l'ajout des couleurs de Wu, la palette n'est pas pleine, les slots restants sont
 // remplis avec des couleurs Thomson uniques choisies aléatoirement (cas rare).
-
-
 
 // --- Fonction principale generate_palette_wu_thomson_aware ---
 void generate_palette_wu_thomson_aware(uint8_t *framed_image, int width, int height,
@@ -331,8 +322,8 @@ void generate_palette_wu_thomson_aware(uint8_t *framed_image, int width, int hei
 	int final_palette_count = 0;
 
 	// 1. Forcer l'inclusion du noir
-	//int black_thomson_idx = find_closest_thomson_idx(0, 0, 0, thomson_palette_source, NULL);
-	//if (black_thomson_idx != -1) {
+	// int black_thomson_idx = find_closest_thomson_idx(0, 0, 0, thomson_palette_source, NULL);
+	// if (black_thomson_idx != -1) {
 	//	generated_palette[final_palette_count] = thomson_palette_source[black_thomson_idx];
 	//	is_thomson_color_used_in_generated_palette[black_thomson_idx] = true;
 	//	printf("  Forced palette[%d]: Black (Thomson Idx:%d, R:%d G:%d B:%d)\n", final_palette_count, black_thomson_idx,
@@ -344,19 +335,19 @@ void generate_palette_wu_thomson_aware(uint8_t *framed_image, int width, int hei
 	//}
 
 	//// 2. Forcer l'inclusion du blanc (seulement si ce n'est pas déjà le noir)
-	//int white_thomson_idx = find_closest_thomson_idx(255, 255, 255, thomson_palette_source, NULL);
-	//if (white_thomson_idx != -1 && !is_thomson_color_used_in_generated_palette[white_thomson_idx]) {
+	// int white_thomson_idx = find_closest_thomson_idx(255, 255, 255, thomson_palette_source, NULL);
+	// if (white_thomson_idx != -1 && !is_thomson_color_used_in_generated_palette[white_thomson_idx]) {
 	//	generated_palette[final_palette_count] = thomson_palette_source[white_thomson_idx];
 	//	is_thomson_color_used_in_generated_palette[white_thomson_idx] = true;
 	//	printf("  Forced palette[%d]: White (Thomson Idx:%d, R:%d G:%d B:%d)\n", final_palette_count, white_thomson_idx,
 	//		   generated_palette[final_palette_count].r, generated_palette[final_palette_count].g,
 	//		   generated_palette[final_palette_count].b);
 	//	final_palette_count++;
-	//} else if (white_thomson_idx == -1) {
+	// } else if (white_thomson_idx == -1) {
 	//	fprintf(stderr, "Warning: White (255,255,255) not found in Thomson palette, cannot force it.\n");
-	//} else if (is_thomson_color_used_in_generated_palette[white_thomson_idx]) {
+	// } else if (is_thomson_color_used_in_generated_palette[white_thomson_idx]) {
 	//	printf("  White (Thomson Idx:%d) already included (might be the same as black).\n", white_thomson_idx);
-	//}
+	// }
 
 	// 3. Ajouter les centroïdes Wu restants, en évitant les doublons
 	for (int i = 0; i < num_boxes && final_palette_count < PALETTE_SIZE; i++) {
@@ -397,18 +388,6 @@ void generate_palette_wu_thomson_aware(uint8_t *framed_image, int width, int hei
 	printf("--- Wu Thomson-Aware Finished. Final palette size: %d ---\n\n", final_palette_count);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 unsigned char clamp_color_component(double val)
 {
 	if (val < 0.0) return 0;
@@ -417,7 +396,8 @@ unsigned char clamp_color_component(double val)
 }
 
 void block_dithering_thomson_smart_propagation(const unsigned char *original_image, DitheredPixel *dithered_image,
-											   int width, int height, int original_channels, Color pal[16], float *matrix)
+											   int width, int height, int original_channels, Color pal[16],
+											   float *matrix)
 {
 	// Alloue de la mémoire pour une version flottante de l'image (pour l'accumulation d'erreur)
 	// C'est ici que l'erreur va se propager D'UN BLOC À L'AUTRE.
@@ -521,7 +501,6 @@ void block_dithering_thomson_smart_propagation(const unsigned char *original_ima
 
 				// (x+1, y) - à droite (dans le même bloc ou bloc voisin)
 
-
 				// propagation d'erreur sans matrice
 				// if (current_x + 1 < width) {
 				// 	int neighbor_float_idx = (y * width + (current_x + 1)) * 3;
@@ -529,7 +508,7 @@ void block_dithering_thomson_smart_propagation(const unsigned char *original_ima
 				// 	image_float[neighbor_float_idx + 1] += error_g * 7.0 / 16.0;
 				// 	image_float[neighbor_float_idx + 2] += error_b * 7.0 / 16.0;
 				// }
-    //
+				//
 				// // (x-1, y+1) - en bas à gauche (bloc voisin en dessous)
 				// if (current_x - 1 >= 0 && y + 1 < height) {
 				// 	int neighbor_float_idx = ((y + 1) * width + (current_x - 1)) * 3;
@@ -537,7 +516,7 @@ void block_dithering_thomson_smart_propagation(const unsigned char *original_ima
 				// 	image_float[neighbor_float_idx + 1] += error_g * 3.0 / 16.0;
 				// 	image_float[neighbor_float_idx + 2] += error_b * 3.0 / 16.0;
 				// }
-    //
+				//
 				// // (x, y+1) - en bas (bloc voisin en dessous)
 				// if (y + 1 < height) {
 				// 	int neighbor_float_idx = ((y + 1) * width + current_x) * 3;
@@ -545,7 +524,7 @@ void block_dithering_thomson_smart_propagation(const unsigned char *original_ima
 				// 	image_float[neighbor_float_idx + 1] += error_g * 5.0 / 16.0;
 				// 	image_float[neighbor_float_idx + 2] += error_b * 5.0 / 16.0;
 				// }
-    //
+				//
 				// // (x+1, y+1) - en bas à droite (bloc voisin en dessous)
 				// if (current_x + 1 < width && y + 1 < height) {
 				// 	int neighbor_float_idx = ((y + 1) * width + (current_x + 1)) * 3;
@@ -554,26 +533,63 @@ void block_dithering_thomson_smart_propagation(const unsigned char *original_ima
 				// 	image_float[neighbor_float_idx + 2] += error_b * 1.0 / 16.0;
 				// }
 
-
 				// propagation d'erreur avec matrix dynamique
-				int matrix_size = matrix[0];
-				for (int i = 0; i < matrix_size; i++) {
-					int xm = matrix[i * 3 + 1];
-					int ym = matrix[i * 3 + 2];
-					float value = matrix[i * 3 + 3];
-					// printf("x=%d y=%d f=%f\n", xm, ym, value);
+				if (matrix) {
+					int matrix_size = matrix[0];
+					for (int i = 0; i < matrix_size; i++) {
+						int xm = matrix[i * 3 + 1];
+						int ym = matrix[i * 3 + 2];
+						float value = matrix[i * 3 + 3];
+						// printf("x=%d y=%d f=%f\n", xm, ym, value);
 
-					if ((current_x + xm < width) && (current_x + xm >= 0) && (y + ym < height) ) {
-						int neighbor_float_idx = ((y + ym) * width + (current_x + xm)) * 3;
-						image_float[neighbor_float_idx] += error_r * value;
-						image_float[neighbor_float_idx + 1] += error_g * value;
-						image_float[neighbor_float_idx + 2] += error_b * value;
+						if ((current_x + xm < width) && (current_x + xm >= 0) && (y + ym < height)) {
+							int neighbor_float_idx = ((y + ym) * width + (current_x + xm)) * 3;
+							image_float[neighbor_float_idx] += error_r * value;
+							image_float[neighbor_float_idx + 1] += error_g * value;
+							image_float[neighbor_float_idx + 2] += error_b * value;
+						}
+					}
+				} else {
+
+					// ostromoukhov
+					// if (matrix == NULL) {
+					int intensity = (int)round(0.2126 * old_color_effective.r + 0.7152 * old_color_effective.g +
+											   0.0722 * old_color_effective.b);
+					printf("i=%d\n", intensity);
+					// intensity /= 257;
+					OSTRO_COEFS oc = OSTRO_COEFS_ARRAY[intensity];
+					if (current_x + 1 < width) {
+						int neighbor_float_idx = (y * width + (current_x + 1)) * 3;
+						image_float[neighbor_float_idx] += error_r * (oc.i_r / (float)oc.i_sum);
+						image_float[neighbor_float_idx + 1] += error_g * (oc.i_r / (float)oc.i_sum);
+						image_float[neighbor_float_idx + 2] += error_b * (oc.i_r / (float)oc.i_sum);
+					}
+
+					// (x-1, y+1) - en bas à gauche (bloc voisin en dessous)
+					if (current_x - 1 >= 0 && y + 1 < height) {
+						int neighbor_float_idx = ((y + 1) * width + (current_x - 1)) * 3;
+						image_float[neighbor_float_idx] += error_r * (oc.i_dl / (float)oc.i_sum);
+						image_float[neighbor_float_idx + 1] += error_g * (oc.i_dl / (float)oc.i_sum);
+						image_float[neighbor_float_idx + 2] += error_b * (oc.i_dl / (float)oc.i_sum);
+					}
+
+					// (x, y+1) - en bas (bloc voisin en dessous)
+					if (y + 1 < height) {
+						int neighbor_float_idx = ((y + 1) * width + current_x) * 3;
+						image_float[neighbor_float_idx] += error_r * (oc.i_d / (float)oc.i_sum);
+						image_float[neighbor_float_idx + 1] += error_g * (oc.i_d / (float)oc.i_sum);
+						image_float[neighbor_float_idx + 2] += error_b * (oc.i_d / (float)oc.i_sum);
 					}
 				}
 			}
 		}
 	}
 	free(image_float);
+}
+
+float rgb_to_luminance(unsigned char r, unsigned char g, unsigned char b)
+{
+	return (0.2126f * r) + (0.7152f * g) + (0.0722f * b);
 }
 
 // --- Fonction de Vérification du Color Clash (essentielle) ---
