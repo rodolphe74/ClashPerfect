@@ -552,10 +552,8 @@ void block_dithering_thomson_smart_propagation(const unsigned char *original_ima
 				} else {
 
 					// ostromoukhov
-					// if (matrix == NULL) {
 					int intensity = (int)round(0.2126 * old_color_effective.r + 0.7152 * old_color_effective.g +
 											   0.0722 * old_color_effective.b);
-					printf("i=%d\n", intensity);
 					// intensity /= 257;
 					OSTRO_COEFS oc = OSTRO_COEFS_ARRAY[intensity];
 					if (current_x + 1 < width) {
