@@ -13,6 +13,7 @@
 #include "thomson.h"
 #include "image.h"
 #include "dither.h"
+#include "palettes.h"
 #include "matrix.h"
 #include "k7.h"
 
@@ -50,9 +51,11 @@ int main(int argc, char *argv[])
 	char *nom_fichier = NULL;
 	int val_d = -1; // Initialisé à -1 pour indiquer qu'il n'a pas été défini
 	int val_m = -1; // Initialisé à -1 pour indiquer qu'il n'a pas été défini
+	int pal = 0;
+	char *pal_name = NULL;
 
 	// Chaîne d'options : "d:m:" signifie que -d prend un argument et -m prend un argument
-	while ((opt = getopt(argc, argv, "d:m:")) != -1) {
+	while ((opt = getopt(argc, argv, "d:m:p:")) != -1) {
 		switch (opt) {
 		case 'd':
 			val_d = atoi(optarg); // optarg contient la chaîne de l'argument (ex: "0")
@@ -67,6 +70,9 @@ int main(int argc, char *argv[])
 				usage();
 				return 1;
 			};
+			break;
+		case 'p':
+			pal_name = optarg;
 			break;
 		case '?': // getopt renvoie '?' si une option est inconnue ou un argument manque
 			usage();
@@ -121,7 +127,20 @@ int main(int argc, char *argv[])
 
 	Color optimal_palette[PALETTE_SIZE];
 
-	if (val_m == 1) {
+	if (pal_name) {
+		int chosen_index = 0;
+		Color chosen[16];
+		for (int i = 0; i < NUM_PALETTES; i++) {
+			if (strcmp(pal_name, palette_table[i].name) == 0) {
+				chosen_index = i;
+				break;
+			}
+		}
+		for (int i = 0; i < 16; i++) {
+			chosen[i] = palette_table[chosen_index].palette[i];
+		}
+		find_closest_thomson_palette(chosen, thomson_palette, palette);
+	} else if (val_m == 1) {
 		generate_palette_wu_thomson_aware(framed_image, WIDTH, HEIGHT, thomson_palette, optimal_palette);
 		find_closest_thomson_palette(optimal_palette, thomson_palette, palette);
 	} else {
