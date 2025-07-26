@@ -34,6 +34,8 @@ void usage()
 	fprintf(stderr, "  8=Atkinson\n");
 	fprintf(stderr, "  9=Ostromoukhov\n");
 	fprintf(stderr, "\n");
+	fprintf(stderr, "-p<chaine> : palette prédéfinie\n");
+	fprintf(stderr, "\n");
 	fprintf(stderr, "-m<chiffre> : machine\n");
 	fprintf(stderr, "  0=MO5\n");
 	fprintf(stderr, "  1=MO6\n");
@@ -238,5 +240,6 @@ int main(int argc, char *argv[])
 	stbi_image_free(original_image);
 	free(resized_image);
 	free(framed_image);
+	free(dithered_image);
 	return 0;
 }
