@@ -18,6 +18,7 @@
 #include "matrix.h"
 #include "k7.h"
 
+
 void usage()
 {
 	fprintf(stderr, "\n");
