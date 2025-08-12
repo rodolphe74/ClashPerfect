@@ -3,3 +3,5 @@ debug/
 build/
 .DS_Store
 .cache/
+.vscode/
+build

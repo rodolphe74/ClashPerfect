@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include "getopt.h"
+#include <getopt.h>
+#include <string.h>
 // #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 // #define STB_IMAGE_WRITE_IMPLEMENTATION

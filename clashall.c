@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <getopt.h>
+#include <string.h>
 // #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 // #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -32,7 +33,7 @@ int main(int argc, char *argv[])
 	int pal = 0;
 	char *pal_name = NULL;
 
-	// Chaîne d'options : "d:m:" signifie que -d prend un argument et -m prend un argument
+	// Chaï¿½ne d'options : "d:m:" signifie que -d prend un argument et -m prend un argument
 	while ((opt = getopt(argc, argv, "")) != -1) {
 		switch (opt) {
 		case '?': // getopt renvoie '?' si une option est inconnue ou un argument manque
@@ -41,7 +42,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	// Après la boucle getopt, optind est l'indice du premier argument non-optionnel.
+	// Aprï¿½s la boucle getopt, optind est l'indice du premier argument non-optionnel.
 	// Dans votre cas, ce sera le nom de fichier.
 	if (optind < argc) {
 		nom_fichier = argv[optind]; // Le premier argument non-optionnel est notre nom de fichier
@@ -56,11 +57,11 @@ int main(int argc, char *argv[])
 	// unsigned char *original_image = stbi_load(argv[1], &width, &height, &channels, COLOR_COMP);
 	unsigned char *original_image = stbi_load(nom_fichier, &width, &height, &channels, COLOR_COMP);
 	if (!original_image) {
-		printf("Erreur: Impossible de charger l'image d'entrée '%s'. Vérifiez le chemin ou le format.\n", argv[1]);
+		printf("Erreur: Impossible de charger l'image d'entrï¿½e '%s'. Vï¿½rifiez le chemin ou le format.\n", argv[1]);
 		return EXIT_FAILURE;
 	}
 
-	printf("Image chargée: %s (%dx%d pixels, %d canaux d'origine)\n", argv[1], width, height, channels);
+	printf("Image chargï¿½e: %s (%dx%d pixels, %d canaux d'origine)\n", argv[1], width, height, channels);
 
 	uint8_t *resized_image = NULL;
 	int wr, hr;
@@ -73,7 +74,7 @@ int main(int argc, char *argv[])
 	for (int i = 0; i < NUM_PALETTES; i++) {
 		DitheredPixel *dithered_image = (DitheredPixel *)malloc(sizeof(DitheredPixel) * WIDTH * HEIGHT);
 		if (!dithered_image) {
-			printf("Erreur: Impossible d'allouer la mémoire pour l'image ditherée.\n");
+			printf("Erreur: Impossible d'allouer la mï¿½moire pour l'image ditherï¿½e.\n");
 			stbi_image_free(original_image);
 			return EXIT_FAILURE;
 		}
@@ -83,12 +84,12 @@ int main(int argc, char *argv[])
 												  palette_table[i].palette,
 												  floyd_matrix[8].matrix /*NULL*/);
 
-		// --- Vérification finale (devrait toujours être 0 violations) ---
+		// --- Vï¿½rification finale (devrait toujours ï¿½tre 0 violations) ---
 		verify_color_clash(dithered_image, WIDTH, HEIGHT);
 
 		unsigned char *output_image_data = (unsigned char *)malloc(width * height * COLOR_COMP);
 		if (!output_image_data) {
-			printf("Erreur: Impossible d'allouer la mémoire pour l'image de sortie.\n");
+			printf("Erreur: Impossible d'allouer la mï¿½moire pour l'image de sortie.\n");
 			free(dithered_image);
 			stbi_image_free(original_image);
 			return EXIT_FAILURE;
@@ -115,9 +116,9 @@ int main(int argc, char *argv[])
 		strcat(fname, palette_table[i].name);
 		strcat(fname, ".png");
 		if (!stbi_write_png(fname, WIDTH, HEIGHT, 3, output_image_data, WIDTH * 3)) {
-			printf("Erreur: Impossible d'écrire l'image PNG '%s'. Tentative en BMP...\n", "clash.png");
+			printf("Erreur: Impossible d'ï¿½crire l'image PNG '%s'. Tentative en BMP...\n", "clash.png");
 		} else {
-			printf("%s créé\n", fname);
+			printf("%s crï¿½ï¿½\n", fname);
 		}
 
 		free(dithered_image);

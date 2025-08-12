@@ -396,7 +396,7 @@ unsigned char clamp_color_component(double val)
 }
 
 void block_dithering_thomson_smart_propagation(const unsigned char *original_image, DitheredPixel *dithered_image,
-											   int width, int height, int original_channels, Color pal[16],
+											   int width, int height, int original_channels, const Color pal[16],
 											   float *matrix)
 {
 	// Alloue de la mémoire pour une version flottante de l'image (pour l'accumulation d'erreur)
