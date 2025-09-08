@@ -153,3 +153,23 @@ unsigned char *convert_rgb_to_rgba(const unsigned char *src_image_data, int widt
 
 	return dest_image_data;
 }
+
+unsigned char *convert_rgba_to_rgb(const unsigned char* rgba, int width, int height) {
+    if (!rgba || width <= 0 || height <= 0) return NULL;
+
+    int total_pixels = width * height;
+    uint8_t* rgb = malloc(total_pixels * 3);
+    if (!rgb) return NULL;
+
+    for (int i = 0; i < total_pixels; i++) {
+        rgb[i * 3 + 0] = rgba[i * 4 + 0]; // R
+        rgb[i * 3 + 1] = rgba[i * 4 + 1]; // G
+        rgb[i * 3 + 2] = rgba[i * 4 + 2]; // B
+        // Alpha (rgba[i * 4 + 3]) est ignoré
+    }
+
+    return rgb;
+}
+
+
+

@@ -9,6 +9,7 @@
 #include <stb_image_write.h>
 // #define STB_IMAGE_RESIZE2_IMPLEMENTATION
 #include <stb_image_resize2.h>
+#include <exoquant.h>
 #include "global.h"
 #include "thomson.h"
 #include "image.h"
@@ -63,7 +64,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'm':
 			val_m = atoi(optarg);
-			if (val_m < 0 || val_m > 1) {
+			if (val_m < 0 || val_m > 3) {
 				usage();
 				return 1;
 			};
@@ -124,9 +125,63 @@ int main(int argc, char *argv[])
 	if (val_m == 1) {
 		generate_palette_wu_thomson_aware(framed_image, WIDTH, HEIGHT, thomson_palette, optimal_palette);
 		find_closest_thomson_palette(optimal_palette, thomson_palette, palette);
-	} else {
-		find_closest_thomson_palette(mo5_palette, thomson_palette, palette);
-	}
+    } else if (val_m == 2 || val_m == 3) {
+        printf("exoquant mode");
+        // ici on va explorer une autre possibilite, on va d'abord tramer la source avec exoquant
+        find_closest_thomson_palette(mo5_palette, thomson_palette, palette);
+        unsigned char exo_palette[16 * 4];
+        
+        exq_data *pExq;
+        pExq = exq_init();
+        exq_no_transparency(pExq);
+        uint8_t *exo_image = convert_rgb_to_rgba(framed_image, wf, hf);
+        exq_feed(pExq, exo_image, wf * hf);
+
+        if (val_m == 2) {
+            for (int i = 0; i < PALETTE_SIZE; i++) {
+                exo_palette[i * 4] = mo5_palette[i].r;
+                exo_palette[i * 4 +1] = mo5_palette[i].g;
+                exo_palette[i * 4 +2] = mo5_palette[i].b;
+                exo_palette[i * 4 +3] = 255;
+            }
+        } else if (val_m == 3) {
+//            exq_quantize(pExq, PALETTE_SIZE);
+//            exq_quantize_hq(pExq, PALETTE_SIZE);
+//            exq_get_palette(pExq, exo_palette, PALETTE_SIZE);
+            generate_palette_wu_thomson_aware(framed_image, WIDTH, HEIGHT, thomson_palette, optimal_palette);
+            find_closest_thomson_palette(optimal_palette, thomson_palette, palette);
+            for (int i = 0; i < PALETTE_SIZE; i++) {
+                exo_palette[i * 4] = palette[i].r;
+                exo_palette[i * 4 +1] = palette[i].g;
+                exo_palette[i * 4 +2] = palette[i].b;
+                exo_palette[i * 4 +3] = 255;
+            }
+        }
+        exq_set_palette(pExq, exo_palette, 16);
+        
+        // dithering
+        unsigned char *indexedPaletteData = malloc(wf * hf);
+        exq_map_image(pExq, wf * hf, exo_image, indexedPaletteData);
+        exq_map_image_ordered(pExq, wf, hf, exo_image, indexedPaletteData);
+
+        for (int i = 0, j = 0; i < wf * hf * 4; i += 4, j++) {
+            exo_image[i] =  *(exo_palette + indexedPaletteData[j] * 4);
+            exo_image[i + 1] =  *(exo_palette + indexedPaletteData[j] * 4 + 1);
+            exo_image[i + 2] =  *(exo_palette + indexedPaletteData[j] * 4 + 2);
+            exo_image[i + 3] =  *(exo_palette + indexedPaletteData[j] * 4 + 3);
+        }
+
+        stbi_write_png("exo_dither.png", wf, hf, 4, exo_image, 4 * wf);
+        
+        free(framed_image);
+        framed_image = convert_rgba_to_rgb((const uint8_t *) exo_image, wf, hf);
+        
+        free(indexedPaletteData);
+        free(exo_image);
+        exq_free(pExq);
+    } else {
+        find_closest_thomson_palette(mo5_palette, thomson_palette, palette);
+    }
 
 
 	DitheredPixel *dithered_image = (DitheredPixel *)malloc(sizeof(DitheredPixel) * WIDTH * HEIGHT);
