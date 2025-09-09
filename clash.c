@@ -43,8 +43,8 @@ void usage()
 	fprintf(stderr, "-m<chiffre> : machine\n");
 	fprintf(stderr, "  0=MO5\n");
 	fprintf(stderr, "  1=MO6\n");
-	fprintf(stderr, "  2=MO5 exoquant dithering\n");
-	fprintf(stderr, "  3=MO6 exoquant dithering\n");
+	fprintf(stderr, "  2=MO5 pre-traitement exoquant dithering\n");
+	fprintf(stderr, "  3=MO6 pre-traitement exoquant dithering\n");
 }
 
 static void find_exo_palette(unsigned char *exo_palette, uint8_t *framed_image, int hf, int wf) {
