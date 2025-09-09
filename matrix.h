@@ -100,6 +100,11 @@ static float FS_ATKINSON[] = {
   0, 2,  1.0 / 8
 };
 
+static float FS_VERTICAL[] = {
+  1,
+  0, 1,  1.0
+};
+
 
 //static float FS_KNUTH[] = {
 //  8,
@@ -132,7 +137,8 @@ static FLOYD_MATRIX floyd_matrix[] = {
   { .name = "Stucki",   .matrix = FS_STUCKI   },
   { .name = "Burkes",   .matrix = FS_BURKES   },
   { .name = "Sierra",   .matrix = FS_SIERRA   },
-  { .name = "Atkinson", .matrix = FS_ATKINSON }
+  { .name = "Atkinson", .matrix = FS_ATKINSON },
+  { .name = "Vertical", .matrix = FS_VERTICAL }
   //{ .name = "Knuth",    .matrix = FS_KNUTH    }
 };
 

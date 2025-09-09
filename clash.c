@@ -35,13 +35,16 @@ void usage()
 	fprintf(stderr, "  6=Burkes\n");
 	fprintf(stderr, "  7=Sierra\n");
 	fprintf(stderr, "  8=Atkinson\n");
-	fprintf(stderr, "  9=Ostromoukhov\n");
+	fprintf(stderr, "  9=Vertical\n");
+	fprintf(stderr, "  10=Ostromoukhov\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "-p<chaine> : palette prédéfinie\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "-m<chiffre> : machine\n");
 	fprintf(stderr, "  0=MO5\n");
 	fprintf(stderr, "  1=MO6\n");
+	fprintf(stderr, "  2=MO5 exoquant dithering\n");
+	fprintf(stderr, "  3=MO6 exoquant dithering\n");
 }
 
 static void find_exo_palette(unsigned char *exo_palette, uint8_t *framed_image, int hf, int wf) {
@@ -91,7 +94,7 @@ int main(int argc, char *argv[])
 		switch (opt) {
 		case 'd':
 			val_d = atoi(optarg); // optarg contient la chaîne de l'argument (ex: "0")
-			if (val_d < 0 || val_d > 9) {
+			if (val_d < 0 || val_d > 10) {
 				usage();
 				return 1;
 			}
@@ -243,7 +246,7 @@ int main(int argc, char *argv[])
 
 	// --- Appel de la NOUVELLE fonction de dithering avec propagation intelligente ---
 	block_dithering_thomson_smart_propagation(framed_image, dithered_image, WIDTH, HEIGHT, COLOR_COMP, palette,
-											  val_d == 9 ? NULL : floyd_matrix[val_d].matrix);
+											  val_d == 10 ? NULL : floyd_matrix[val_d].matrix);
 
 	// --- Vérification finale (devrait toujours être 0 violations) ---
 	verify_color_clash(dithered_image, WIDTH, HEIGHT);
