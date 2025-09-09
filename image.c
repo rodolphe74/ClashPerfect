@@ -32,7 +32,7 @@ long count_unique_colors_hashed(const unsigned char *image_data, int width, int 
 	bool *color_seen = (bool *)calloc(MAX_24BIT_COLORS, sizeof(bool));
 	if (color_seen == NULL) {
 		printf("Erreur: Impossible d'allouer de la mémoire pour la table de hachage des couleurs (%lu octets).\n",
-			   (unsigned long) MAX_24BIT_COLORS * sizeof(bool));
+			   (unsigned long)(MAX_24BIT_COLORS * sizeof(bool)));
 		return 0;
 	}
 

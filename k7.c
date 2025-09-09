@@ -1,4 +1,5 @@
 #include "k7.h"
+#include <string.h>
 
 /*******************************************************************************
  * Rapide programme pour mettre des fichiers dans une K7 MO

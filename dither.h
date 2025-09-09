@@ -5,9 +5,9 @@
 #include <stdbool.h>
 
 
-// --- Définitions globales et structures ---
+// --- Dï¿½finitions globales et structures ---
 #define NUM_THOMSON_COLORS 4096 // Nombre total de couleurs dans la palette Thomson
-#define PALETTE_SIZE 16			// Nombre de couleurs souhaité dans la palette finale
+#define PALETTE_SIZE 16			// Nombre de couleurs souhaitï¿½ dans la palette finale
 
 //// Structure pour une couleur (RGB 0-255 avec index Thomson)
 //typedef struct {
@@ -16,13 +16,13 @@
 //} Color;
 
 typedef struct {
-	int min_idx, max_idx;	  // Plage d'indices Thomson que cette boîte couvre
-	long sum_r, sum_g, sum_b; // Sommes des composantes RGB des couleurs Thomson dans cette boîte
-	uint32_t pixel_count;	  // Nombre total de pixels (réels) associés aux couleurs Thomson dans cette boîte
-	double variance;		  // Variance des couleurs dans cette boîte (utilisée pour le critère de division)
+	int min_idx, max_idx;	  // Plage d'indices Thomson que cette boï¿½te couvre
+	long sum_r, sum_g, sum_b; // Sommes des composantes RGB des couleurs Thomson dans cette boï¿½te
+	uint32_t pixel_count;	  // Nombre total de pixels (rï¿½els) associï¿½s aux couleurs Thomson dans cette boï¿½te
+	double variance;		  // Variance des couleurs dans cette boï¿½te (utilisï¿½e pour le critï¿½re de division)
 } WuBox;
 
-// --- Déclaration de la palette Thomson globale et du tableau d'unicité ---
+// --- Dï¿½claration de la palette Thomson globale et du tableau d'unicitï¿½ ---
 extern Color thomson_palette[NUM_THOMSON_COLORS];
 static bool is_thomson_color_used_in_generated_palette[NUM_THOMSON_COLORS];
 
@@ -36,7 +36,7 @@ int find_closest_thomson_idx(unsigned char r, unsigned char g, unsigned char b,
 unsigned char clamp_color_component(double val);
 
 void block_dithering_thomson_smart_propagation(const unsigned char *original_image, DitheredPixel *dithered_image,
-											   int width, int height, int original_channels, Color pal[16], float *matrix);
+											   int width, int height, int original_channels, const Color pal[16], float *matrix);
 bool verify_color_clash(const DitheredPixel *dithered_image, int width, int height);
 void generate_palette_wu_thomson_aware(uint8_t *framed_image, int width, int height,
 									   Color thomson_palette_source[NUM_THOMSON_COLORS],

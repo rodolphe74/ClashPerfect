@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <getopt.h>
+#include <string.h>
 // #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 // #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -14,8 +15,10 @@
 #include "thomson.h"
 #include "image.h"
 #include "dither.h"
+#include "palettes.h"
 #include "matrix.h"
 #include "k7.h"
+
 
 void usage()
 {
@@ -34,9 +37,38 @@ void usage()
 	fprintf(stderr, "  8=Atkinson\n");
 	fprintf(stderr, "  9=Ostromoukhov\n");
 	fprintf(stderr, "\n");
+	fprintf(stderr, "-p<chaine> : palette prédéfinie\n");
+	fprintf(stderr, "\n");
 	fprintf(stderr, "-m<chiffre> : machine\n");
 	fprintf(stderr, "  0=MO5\n");
 	fprintf(stderr, "  1=MO6\n");
+}
+
+static void find_exo_palette(unsigned char *exo_palette, uint8_t *framed_image, int hf, int wf) {
+    exq_data *pExqPalette;
+    pExqPalette = exq_init();
+    uint8_t *exo_image_feed = convert_rgb_to_rgba(framed_image, wf, hf);
+    exq_feed(pExqPalette, exo_image_feed, wf * hf);
+    exq_quantize_hq(pExqPalette, PALETTE_SIZE);
+    exq_get_palette(pExqPalette, exo_palette, PALETTE_SIZE);
+    exq_free(pExqPalette);
+    free(exo_image_feed);
+}
+
+static void quantize_exo_to_4096(unsigned char *exo_palette, Color *palette, Color *thomson_palette) {
+    Color optimal_palette[PALETTE_SIZE];
+    for (int i = 0; i < PALETTE_SIZE; i++) {
+        optimal_palette[i].r = exo_palette[i * 4];
+        optimal_palette[i].g = exo_palette[i * 4 + 1];
+        optimal_palette[i].b = exo_palette[i * 4 + 2];
+    }
+    find_closest_thomson_palette(optimal_palette, thomson_palette, palette);
+    for (int i = 0; i < PALETTE_SIZE; i++) {
+        exo_palette[i * 4] = palette[i].r;
+        exo_palette[i * 4 + 1] = palette[i].g;
+        exo_palette[i * 4 + 2] = palette[i].b;
+        exo_palette[i * 4 + 3] = 255;
+    }
 }
 
 int main(int argc, char *argv[])
@@ -51,9 +83,11 @@ int main(int argc, char *argv[])
 	char *nom_fichier = NULL;
 	int val_d = -1; // Initialisé à -1 pour indiquer qu'il n'a pas été défini
 	int val_m = -1; // Initialisé à -1 pour indiquer qu'il n'a pas été défini
+	int pal = 0;
+	char *pal_name = NULL;
 
 	// Chaîne d'options : "d:m:" signifie que -d prend un argument et -m prend un argument
-	while ((opt = getopt(argc, argv, "d:m:")) != -1) {
+	while ((opt = getopt(argc, argv, "d:m:p:")) != -1) {
 		switch (opt) {
 		case 'd':
 			val_d = atoi(optarg); // optarg contient la chaîne de l'argument (ex: "0")
@@ -68,6 +102,9 @@ int main(int argc, char *argv[])
 				usage();
 				return 1;
 			};
+			break;
+		case 'p':
+			pal_name = optarg;
 			break;
 		case '?': // getopt renvoie '?' si une option est inconnue ou un argument manque
 			usage();
@@ -122,10 +159,29 @@ int main(int argc, char *argv[])
 
 	Color optimal_palette[PALETTE_SIZE];
 
-	if (val_m == 1) {
-		generate_palette_wu_thomson_aware(framed_image, WIDTH, HEIGHT, thomson_palette, optimal_palette);
-		find_closest_thomson_palette(optimal_palette, thomson_palette, palette);
+	if (pal_name) {
+		int chosen_index = 0;
+		Color chosen[16];
+		for (int i = 0; i < NUM_PALETTES; i++) {
+			if (strcmp(pal_name, palette_table[i].name) == 0) {
+				chosen_index = i;
+				break;
+			}
+		}
+		for (int i = 0; i < 16; i++) {
+			chosen[i] = palette_table[chosen_index].palette[i];
+		}
+		find_closest_thomson_palette(chosen, thomson_palette, palette);
+	} else if (val_m == 1) {
+        // mo6 error diffusion
+//		generate_palette_wu_thomson_aware(framed_image, WIDTH, HEIGHT, thomson_palette, optimal_palette);
+//		find_closest_thomson_palette(optimal_palette, thomson_palette, palette);
+        unsigned char exo_palette[16 * 4];
+        find_exo_palette(exo_palette, framed_image, hf, wf);
+        quantize_exo_to_4096(exo_palette, palette, thomson_palette);
+
     } else if (val_m == 2 || val_m == 3) {
+        // mo6 mo5 exoquant dithering
         printf("exoquant mode");
         // ici on va explorer une autre possibilite, on va d'abord tramer la source avec exoquant
         find_closest_thomson_palette(mo5_palette, thomson_palette, palette);
@@ -145,17 +201,8 @@ int main(int argc, char *argv[])
                 exo_palette[i * 4 +3] = 255;
             }
         } else if (val_m == 3) {
-//            exq_quantize(pExq, PALETTE_SIZE);
-//            exq_quantize_hq(pExq, PALETTE_SIZE);
-//            exq_get_palette(pExq, exo_palette, PALETTE_SIZE);
-            generate_palette_wu_thomson_aware(framed_image, WIDTH, HEIGHT, thomson_palette, optimal_palette);
-            find_closest_thomson_palette(optimal_palette, thomson_palette, palette);
-            for (int i = 0; i < PALETTE_SIZE; i++) {
-                exo_palette[i * 4] = palette[i].r;
-                exo_palette[i * 4 +1] = palette[i].g;
-                exo_palette[i * 4 +2] = palette[i].b;
-                exo_palette[i * 4 +3] = 255;
-            }
+            find_exo_palette(exo_palette, framed_image, hf, wf);
+            quantize_exo_to_4096(exo_palette, palette, thomson_palette);
         }
         exq_set_palette(pExq, exo_palette, 16);
         
@@ -163,7 +210,8 @@ int main(int argc, char *argv[])
         unsigned char *indexedPaletteData = malloc(wf * hf);
         exq_map_image(pExq, wf * hf, exo_image, indexedPaletteData);
         exq_map_image_ordered(pExq, wf, hf, exo_image, indexedPaletteData);
-
+//        exq_map_image_dither(pExq, wf, hf, exo_image, indexedPaletteData, 0);   // random
+        
         for (int i = 0, j = 0; i < wf * hf * 4; i += 4, j++) {
             exo_image[i] =  *(exo_palette + indexedPaletteData[j] * 4);
             exo_image[i + 1] =  *(exo_palette + indexedPaletteData[j] * 4 + 1);
@@ -180,6 +228,7 @@ int main(int argc, char *argv[])
         free(exo_image);
         exq_free(pExq);
     } else {
+        // mo5 error diffusion
         find_closest_thomson_palette(mo5_palette, thomson_palette, palette);
     }
 
@@ -274,5 +323,6 @@ int main(int argc, char *argv[])
 	stbi_image_free(original_image);
 	free(resized_image);
 	free(framed_image);
+	free(dithered_image);
 	return 0;
 }
